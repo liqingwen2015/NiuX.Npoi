@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32421.90
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NiuX.Npoi", "src\NiuX.Npoi\NiuX.Npoi.csproj", "{E4279BC4-9E52-404C-8C70-020BEE0723EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NiuX.Npoi.Tests", "test\NiuX.Npoi.Tests\NiuX.Npoi.Tests.csproj", "{D75154AC-D094-44FA-9EAE-E9B1B71099EB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E4279BC4-9E52-404C-8C70-020BEE0723EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4279BC4-9E52-404C-8C70-020BEE0723EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4279BC4-9E52-404C-8C70-020BEE0723EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4279BC4-9E52-404C-8C70-020BEE0723EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D75154AC-D094-44FA-9EAE-E9B1B71099EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D75154AC-D094-44FA-9EAE-E9B1B71099EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D75154AC-D094-44FA-9EAE-E9B1B71099EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D75154AC-D094-44FA-9EAE-E9B1B71099EB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5DD2AFE5-8F79-4A67-B031-EAC381C56F41}
+	EndGlobalSection
+EndGlobal
