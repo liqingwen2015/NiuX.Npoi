@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using NiuX.Npoi.Abstractions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NiuX.Npoi;
 

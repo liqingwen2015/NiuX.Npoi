@@ -4,6 +4,7 @@ using System.Linq;
 using NiuX;
 using NiuX.Npoi;
 using NiuX.Npoi.Extensions;
+using NiuX.Npoi.Utils;
 using Xunit;
 
 namespace NiuX.Npoi.Tests;

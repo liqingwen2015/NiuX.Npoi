@@ -1,6 +1,6 @@
 ﻿using NiuX.Npoi.Attributes;
 
-namespace NiuX.Npoi;
+namespace NiuX.Npoi.Abstractions;
 
 /// <summary>
 /// Information required for one column when mapping between object and file rows.

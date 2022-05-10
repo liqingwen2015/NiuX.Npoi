@@ -6,7 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using NiuX.Npoi.Abstractions;
 using NiuX.Npoi.Attributes;
+using NiuX.Npoi.Utils;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
@@ -21,34 +23,41 @@ public class Mapper
     #region Fields
 
     // Current working workbook.
-    private IWorkbook _workbook;
+    private IWorkbook? _workbook;
 
-    private Func<IColumnInfo, bool> _columnFilter;
-    private Func<IColumnInfo, object, bool> _defaultTakeResolver;
-    private Func<IColumnInfo, object, bool> _defaultPutResolver;
-    private Action<ICell> _headerAction;
+    private Func<IColumnInfo, bool>? _columnFilter;
+    private Func<IColumnInfo, object, bool>? _defaultTakeResolver;
+    private Func<IColumnInfo, object, bool>? _defaultPutResolver;
+    private Action<ICell>? _headerAction;
 
     #endregion
 
     #region Properties
 
-    // Instance of helper class.
-    private MapHelper Helper = new MapHelper();
+    /// <summary>
+    /// Instance of helper class.
+    /// </summary>
+    private readonly MapHelper _maphelper = new();
 
-    // Stores formats for type rather than specific property.
-    internal readonly Dictionary<Type, string> TypeFormats = new Dictionary<Type, string>();
+    /// <summary>
+    /// Stores formats for type rather than specific property.
+    /// </summary>
+    internal readonly Dictionary<Type, string> TypeFormats = new();
 
-    // PropertyInfo map to ColumnAttribute
-    private Dictionary<PropertyInfo, ColumnAttribute> Attributes { get; } = new Dictionary<PropertyInfo, ColumnAttribute>();
+    /// <summary>
+    /// PropertyInfo map to ColumnAttribute
+    /// </summary>
+    private Dictionary<PropertyInfo, ColumnAttribute> Attributes { get; } = new();
 
-    // Property name map to ColumnAttribute
-    private Dictionary<string, ColumnAttribute> DynamicAttributes { get; } = new Dictionary<string, ColumnAttribute>();
+    /// <summary>
+    /// Property name map to ColumnAttribute
+    /// </summary>
+    private Dictionary<string, ColumnAttribute> DynamicAttributes { get; } = new();
 
     /// <summary>
     /// Cache the tracked <see cref="ColumnInfo"/> objects by sheet name and target type.
     /// </summary>
-    private Dictionary<string, Dictionary<Type, List<object>>> TrackedColumns { get; } =
-        new ();
+    private Dictionary<string, Dictionary<Type, List<object>>> TrackedColumns { get; } = new ();
 
     /// <summary>
     /// Sheet name map to tracked objects in dictionary with row number as key.
@@ -58,9 +67,9 @@ public class Mapper
     /// <summary>
     /// The Excel workbook.
     /// </summary>
-    public IWorkbook Workbook
+    public IWorkbook? Workbook
     {
-        get { return _workbook; }
+        get => _workbook;
 
         private set
         {
@@ -68,8 +77,9 @@ public class Mapper
             {
                 Objects.Clear();
                 TrackedColumns.Clear();
-                Helper.ClearCache();
+                _maphelper.ClearCache();
             }
+            
             _workbook = value;
         }
     }
@@ -77,12 +87,12 @@ public class Mapper
     /// <summary>
     /// When map column, chars in this array will be removed from column header.
     /// </summary>
-    public char[] IgnoredNameChars { get; set; }
+    public char[]? IgnoredNameChars { get; set; }
 
     /// <summary>
     /// When map column, column name will be truncated from any of chars in this array.
     /// </summary>
-    public char[] TruncateNameFrom { get; set; }
+    public char[]? TruncateNameFrom { get; set; }
 
     /// <summary>
     /// Whether to track objects read from the Excel file. Default is true.
@@ -134,10 +144,7 @@ public class Mapper
     /// <param name="workbook">The input IWorkbook object.</param>
     public Mapper(IWorkbook workbook)
     {
-        if (workbook == null)
-            throw new ArgumentNullException(nameof(workbook));
-
-        Workbook = workbook;
+        Workbook = workbook ?? throw new ArgumentNullException(nameof(workbook));
     }
 
     /// <summary>
@@ -159,7 +166,7 @@ public class Mapper
     /// <param name="tryTake">The function try to import from cell value to the target object.</param>
     /// <param name="tryPut">The function try to export source object to the cell.</param>
     /// <returns>The mapper object.</returns>
-    public Mapper Map(Func<IColumnInfo, bool> columnFilter, Func<IColumnInfo, object, bool> tryTake = null, Func<IColumnInfo, object, bool> tryPut = null)
+    public Mapper Map(Func<IColumnInfo, bool>? columnFilter, Func<IColumnInfo, object, bool>? tryTake = null, Func<IColumnInfo, object, bool>? tryPut = null)
     {
         _columnFilter = columnFilter;
         _defaultPutResolver = tryPut;
@@ -175,7 +182,7 @@ public class Mapper
     /// <returns>The mapper object.</returns>
     public Mapper Map(ColumnAttribute attribute)
     {
-        if (attribute == null) throw new ArgumentNullException(nameof(attribute));
+        ExceptionUtils.ThrowArgumentNullExceptionIfNull(attribute, nameof(attribute));
 
         if (attribute.Property != null)
         {
@@ -190,17 +197,13 @@ public class Mapper
             else
             {
                 // Ensures column name for the first time mapping.
-                if (attribute.Name == null)
-                {
-                    attribute.Name = attribute.PropertyName;
-                }
-
+                attribute.Name ??= attribute.PropertyName;
                 DynamicAttributes[attribute.PropertyName] = attribute;
             }
         }
         else
         {
-            throw new InvalidOperationException("Either PropertyName or Property should be specified for a valid mapping!");
+            ExceptionUtils.ThrowInvalidOperationException("Either PropertyName or Property should be specified for a valid mapping!");
         }
 
         return this;
@@ -279,7 +282,7 @@ public class Mapper
     /// </summary>
     /// <param name="headerAction">Action to configure header cell.</param>
     /// <returns>The mapper object.</returns>
-    public Mapper ForHeader(Action<ICell> headerAction)
+    public Mapper ForHeader(Action<ICell>? headerAction)
     {
         _headerAction = headerAction;
         return this;
@@ -293,11 +296,8 @@ public class Mapper
     /// <param name="maxErrorRows">The maximum error rows before stop reading; default is 10.</param>
     /// <param name="objectInitializer">Factory method to create a new target object.</param>
     /// <returns>Objects of target type</returns>
-    public IEnumerable<RowInfo<T>> Take<T>(int sheetIndex = 0, int maxErrorRows = 10, Func<T> objectInitializer = null) where T : class
-    {
-        var sheet = Workbook.GetSheetAt(sheetIndex);
-        return Take(sheet, maxErrorRows, objectInitializer);
-    }
+    public IEnumerable<RowInfo<T>> Take<T>(int sheetIndex = 0, int maxErrorRows = 10, Func<T>? objectInitializer = null) where T : class => 
+        Take(Workbook.GetSheetAt(sheetIndex), maxErrorRows, objectInitializer);
 
     /// <summary>
     /// Get objects of target type by converting rows in the sheet with specified name.
@@ -307,11 +307,8 @@ public class Mapper
     /// <param name="maxErrorRows">The maximum error rows before stopping read; default is 10.</param>
     /// <param name="objectInitializer">Factory method to create a new target object.</param>
     /// <returns>Objects of target type</returns>
-    public IEnumerable<RowInfo<T>> Take<T>(string sheetName, int maxErrorRows = 10, Func<T> objectInitializer = null) where T : class
-    {
-        var sheet = Workbook.GetSheet(sheetName);
-        return Take(sheet, maxErrorRows, objectInitializer);
-    }
+    public IEnumerable<RowInfo<T>> Take<T>(string sheetName, int maxErrorRows = 10, Func<T>? objectInitializer = null) where T : class => 
+        Take(Workbook.GetSheet(sheetName), maxErrorRows, objectInitializer);
 
     /// <summary>
     /// Put objects in the sheet with specified name.
@@ -322,7 +319,7 @@ public class Mapper
     /// <param name="overwrite"><c>true</c> to overwrite existing rows; otherwise append.</param>
     public void Put<T>(IEnumerable<T> objects, string sheetName, bool overwrite = true)
     {
-        if (Workbook == null) Workbook = new XSSFWorkbook();
+        Workbook ??= new XSSFWorkbook();
         var sheet = Workbook.GetSheet(sheetName) ?? Workbook.CreateSheet(sheetName);
         Put(sheet, objects, overwrite);
     }
@@ -336,7 +333,7 @@ public class Mapper
     /// <param name="overwrite"><c>true</c> to overwrite existing rows; otherwise append.</param>
     public void Put<T>(IEnumerable<T> objects, int sheetIndex = 0, bool overwrite = true)
     {
-        if (Workbook == null) Workbook = new XSSFWorkbook();
+        Workbook ??= new XSSFWorkbook();
         var sheet = Workbook.NumberOfSheets > sheetIndex ? Workbook.GetSheetAt(sheetIndex) : Workbook.CreateSheet();
         Put(sheet, objects, overwrite);
     }
@@ -349,18 +346,15 @@ public class Mapper
     {
         if (Workbook == null) return;
 
-        using (var fs = File.Open(path, FileMode.Create, FileAccess.Write))
-            Workbook.Write(fs);
+        using var fs = File.Open(path, FileMode.Create, FileAccess.Write);
+        Workbook.Write(fs);
     }
 
     /// <summary>
     /// Saves the current workbook to specified stream.
     /// </summary>
     /// <param name="stream">The stream to save the workbook.</param>
-    public void Save(Stream stream)
-    {
-        Workbook?.Write(stream);
-    }
+    public void Save(Stream stream) => Workbook?.Write(stream);
 
     /// <summary>
     /// Saves the specified objects to the specified Excel file.
@@ -392,8 +386,8 @@ public class Mapper
     {
         if (Workbook == null && !overwrite) LoadWorkbookFromFile(path);
 
-        using (var fs = File.Open(path, FileMode.Create, FileAccess.Write))
-            Save(fs, objects, sheetIndex, overwrite, xlsx);
+        using var fs = File.Open(path, FileMode.Create, FileAccess.Write);
+        Save(fs, objects, sheetIndex, overwrite, xlsx);
     }
 
     /// <summary>
@@ -407,8 +401,7 @@ public class Mapper
     /// <param name="xlsx">if set to <c>true</c> saves in .xlsx format; otherwise, saves in .xls format.</param>
     public void Save<T>(Stream stream, IEnumerable<T> objects, string sheetName, bool overwrite = true, bool xlsx = true)
     {
-        if (Workbook == null)
-            Workbook = xlsx ? new XSSFWorkbook() : new HSSFWorkbook();
+        Workbook ??= xlsx ? new XSSFWorkbook() : new HSSFWorkbook();
         var sheet = Workbook.GetSheet(sheetName) ?? Workbook.CreateSheet(sheetName);
         Save(stream, sheet, objects, overwrite);
     }
@@ -424,8 +417,7 @@ public class Mapper
     /// <param name="xlsx">if set to <c>true</c> saves in .xlsx format; otherwise, saves in .xls format.</param>
     public void Save<T>(Stream stream, IEnumerable<T> objects, int sheetIndex = 0, bool overwrite = true, bool xlsx = true)
     {
-        if (Workbook == null)
-            Workbook = xlsx ? new XSSFWorkbook() : (IWorkbook)new HSSFWorkbook();
+        Workbook ??= xlsx ? new XSSFWorkbook() : new HSSFWorkbook();
         var sheet = Workbook.NumberOfSheets > sheetIndex ? Workbook.GetSheetAt(sheetIndex) : Workbook.CreateSheet();
         Save(stream, sheet, objects, overwrite);
     }
@@ -442,8 +434,8 @@ public class Mapper
     {
         if (Workbook == null && !overwrite) LoadWorkbookFromFile(path);
 
-        using (var fs = File.Open(path, FileMode.Create, FileAccess.Write))
-            Save<T>(fs, sheetName, overwrite, xlsx);
+        using var fs = File.Open(path, FileMode.Create, FileAccess.Write);
+        Save<T>(fs, sheetName, overwrite, xlsx);
     }
 
     /// <summary>
@@ -458,8 +450,8 @@ public class Mapper
     {
         if (Workbook == null && !overwrite) LoadWorkbookFromFile(path);
 
-        using (var fs = File.Open(path, FileMode.Create, FileAccess.Write))
-            Save<T>(fs, sheetIndex, overwrite, xlsx);
+        using var fs = File.Open(path, FileMode.Create, FileAccess.Write);
+        Save<T>(fs, sheetIndex, overwrite, xlsx);
     }
 
     /// <summary>
@@ -472,8 +464,7 @@ public class Mapper
     /// <param name="xlsx">if <c>true</c> saves in .xlsx format; otherwise, saves in .xls format.</param>
     public void Save<T>(Stream stream, string sheetName, bool overwrite = true, bool xlsx = true)
     {
-        if (Workbook == null)
-            Workbook = xlsx ? new XSSFWorkbook() : (IWorkbook)new HSSFWorkbook();
+        Workbook ??= xlsx ? new XSSFWorkbook() : new HSSFWorkbook();
         var sheet = Workbook.GetSheet(sheetName) ?? Workbook.CreateSheet(sheetName);
 
         Save<T>(stream, sheet, overwrite);
@@ -489,8 +480,7 @@ public class Mapper
     /// <param name="xlsx">if set to <c>true</c> saves in .xlsx format; otherwise, saves in .xls format.</param>
     public void Save<T>(Stream stream, int sheetIndex = 0, bool overwrite = true, bool xlsx = true)
     {
-        if (Workbook == null)
-            Workbook = xlsx ? new XSSFWorkbook() : (IWorkbook)new HSSFWorkbook();
+        Workbook ??= xlsx ? new XSSFWorkbook() : new HSSFWorkbook();
         var sheet = Workbook.GetSheetAt(sheetIndex) ?? Workbook.CreateSheet();
 
         Save<T>(stream, sheet, overwrite);
@@ -502,7 +492,7 @@ public class Mapper
 
     #region Import
 
-    private IEnumerable<RowInfo<T>> Take<T>(ISheet sheet, int maxErrorRows, Func<T> objectInitializer = null) where T : class
+    private IEnumerable<RowInfo<T>> Take<T>(ISheet? sheet, int maxErrorRows, Func<T>? objectInitializer = null) where T : class
     {
         if (sheet == null || sheet.PhysicalNumberOfRows < 1)
         {
@@ -526,13 +516,14 @@ public class Mapper
         var columns = GetColumns(firstRow, targetType);
 
         // Detect column format based on the first non-null cell.
-        Helper.LoadDataFormats(sheet, HasHeader ? firstRowIndex + 1 : firstRowIndex, columns, TypeFormats);
+        _maphelper.LoadDataFormats(sheet, HasHeader ? firstRowIndex + 1 : firstRowIndex, columns, TypeFormats);
 
         if (TrackObjects) Objects[sheet.SheetName] = new Dictionary<int, object>();
 
         // Loop rows in file. Generate one target object for each row.
         var errorCount = 0;
         var firstDataRowIndex = HasHeader ? firstRowIndex + 1 : firstRowIndex;
+        
         foreach (IRow row in sheet)
         {
             if (maxErrorRows > 0 && errorCount >= maxErrorRows) break;
@@ -547,6 +538,7 @@ public class Mapper
                 errorCount++;
                 //rowInfo.Value = default(T);
             }
+            
             if (TrackObjects) Objects[sheet.SheetName][row.RowNum] = rowInfo.Value;
 
             yield return rowInfo;
@@ -563,9 +555,9 @@ public class Mapper
         foreach (var header in firstRow)
         {
             var column = GetColumnInfoByDynamicAttribute(header);
-            var type = Helper.InferColumnDataType(sheet, HasHeader ? firstRowIndex : -1, header.ColumnIndex);
+            var type = _maphelper.InferColumnDataType(sheet, HasHeader ? firstRowIndex : -1, header.ColumnIndex);
 
-            if (column != null)
+            if (column?.Attribute.PropertyName != null)
             {
                 names[column.Attribute.PropertyName] = type ?? typeof(string);
             }
@@ -609,7 +601,7 @@ public class Mapper
         var columnsCache = new List<object>(); // Cached for export usage.
 
         // Prepare a list of ColumnInfo by the first row.
-        foreach (ICell header in headerRow)
+        foreach (var header in headerRow)
         {
             // Custom mappings via attributes.
             var column = GetColumnInfoByAttribute(header, type);
@@ -653,7 +645,7 @@ public class Mapper
         return columns;
     }
 
-    private ColumnInfo GetColumnInfoByDynamicAttribute(ICell header)
+    private ColumnInfo? GetColumnInfoByDynamicAttribute(ICell header)
     {
         var cellType = MapHelper.GetCellType(header);
         var index = header.ColumnIndex;
@@ -682,7 +674,7 @@ public class Mapper
         return null;
     }
 
-    private ColumnInfo GetColumnInfoByAttribute(ICell header, Type type)
+    private ColumnInfo? GetColumnInfoByAttribute(ICell header, Type type)
     {
         var cellType = MapHelper.GetCellType(header);
         var index = header.ColumnIndex;
@@ -714,7 +706,7 @@ public class Mapper
         return null;
     }
 
-    private ColumnInfo GetColumnInfoByName(string name, int index, Type type)
+    private ColumnInfo? GetColumnInfoByName(string name, int index, Type type)
     {
         // First attempt: search by string (ignore case).
         var pi = type.GetProperty(name, MapHelper.BindingFlag);
@@ -753,7 +745,7 @@ public class Mapper
         return attribute == null ? new ColumnInfo(name, index, pi) : new ColumnInfo(name, attribute);
     }
 
-    private static ColumnInfo GetColumnInfoByFilter(ICell header, Func<IColumnInfo, bool> columnFilter)
+    private static ColumnInfo? GetColumnInfoByFilter(ICell header, Func<IColumnInfo, bool>? columnFilter)
     {
         if (columnFilter == null) return null;
 
@@ -1049,7 +1041,7 @@ public class Mapper
 
         if (column != null && setStyle)
         {
-            column.SetCellStyle(cell, value, isHeader, TypeFormats, Helper);
+            column.SetCellStyle(cell, value, isHeader, TypeFormats, _maphelper);
         }
     }
 

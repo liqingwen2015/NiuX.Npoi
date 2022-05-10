@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using NiuX.Npoi.Abstractions;
 using NiuX.Npoi.Attributes;
 using NPOI.SS.UserModel;
 
-namespace NiuX.Npoi;
+namespace NiuX.Npoi.Utils;
 
 /// <summary>
 /// Provide static supportive functionalities for <see cref="Mapper"/> class.
@@ -361,7 +363,7 @@ public class MapHelper
     /// <typeparam name="T">The object type that property belongs to.</typeparam>
     /// <param name="propertySelector">The property selector expression.</param>
     /// <returns>The mapped <c>PropertyInfo</c> object.</returns>
-    public static PropertyInfo GetPropertyInfoByExpression<T>(Expression<Func<T, object>> propertySelector)
+    public static PropertyInfo? GetPropertyInfoByExpression<T>(Expression<Func<T, object>> propertySelector)
     {
         var expression = propertySelector as LambdaExpression;
 
@@ -384,7 +386,7 @@ public class MapHelper
     /// <param name="ignoringChars">Chars will be removed from the name string.</param>
     /// <param name="truncatingChars">Chars used truncate the name string.</param>
     /// <returns>Refined name string.</returns>
-    public static string GetRefinedName(string name, char[] ignoringChars, char[] truncatingChars)
+    public static string GetRefinedName(string name, char[]? ignoringChars, char[]? truncatingChars)
     {
         if (name == null) return null;
 
@@ -408,7 +410,7 @@ public class MapHelper
     /// <param name="truncatingChars">Chars used truncate the name string.</param>
     /// <param name="columnIndex">The column index.</param>
     /// <returns>A valid variable name based on the rawName.</returns>
-    public static string GetVariableName(string rawName, char[] ignoringChars, char[] truncatingChars, int columnIndex)
+    public static string GetVariableName(string rawName, char[]? ignoringChars, char[]? truncatingChars, int columnIndex)
     {
         rawName = GetRefinedName(rawName, ignoringChars, truncatingChars);
 
@@ -448,7 +450,7 @@ public class MapHelper
     /// <param name="headerRowIndex">The row index for the header, pass -1 if no header.</param>
     /// <param name="columnIndex">The index for the column.</param>
     /// <returns>The type object.</returns>
-    public Type InferColumnDataType(ISheet sheet, int headerRowIndex, int columnIndex)
+    public Type? InferColumnDataType(ISheet sheet, int headerRowIndex, int columnIndex)
     {
         if (sheet == null) throw new ArgumentNullException(nameof(sheet));
         if (columnIndex < 0) throw new ArgumentOutOfRangeException(nameof(columnIndex));

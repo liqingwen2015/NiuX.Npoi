@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NiuX.Npoi.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -24,18 +25,18 @@ public sealed class ColumnAttribute : Attribute
     /// <summary>
     /// Column name.
     /// </summary>
-    public string Name { get; internal set; }
+    public string? Name { get; internal set; }
 
     /// <summary>
     /// Property name, this is only used for dynamic type.
     /// </summary>
-    public string PropertyName { get; set; }
+    public string? PropertyName { get; set; }
 
-    private PropertyInfo _property;
+    private PropertyInfo? _property;
     /// <summary>
     /// Mapped property for this column.
     /// </summary>
-    public PropertyInfo Property
+    public PropertyInfo? Property
     {
         get => _property;
 
@@ -59,12 +60,12 @@ public sealed class ColumnAttribute : Attribute
     /// <summary>
     /// Get underlying type if property is nullable value type, otherwise return null.
     /// </summary>
-    public Type PropertyUnderlyingType { get; private set; }
+    public Type? PropertyUnderlyingType { get; private set; }
 
     /// <summary>
     /// Get converter if property is nullable value type.
     /// </summary>
-    public TypeConverter PropertyUnderlyingConverter { get; private set; }
+    public TypeConverter? PropertyUnderlyingConverter { get; private set; }
 
     /// <summary>
     /// Indicate whether to use the last non-blank value.
@@ -159,7 +160,7 @@ public sealed class ColumnAttribute : Attribute
     /// Whether or not to overwrite specified properties from source if source's properties are specified.
     /// Note that Index and Name are considered together as one key property.
     /// </param>
-    public void MergeFrom(ColumnAttribute source, bool overwrite = true)
+    public void MergeFrom(ColumnAttribute? source, bool overwrite = true)
     {
         if (source == null) return;
 

@@ -4,6 +4,12 @@
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <Version>0.1.2</Version>
+    <Authors>liqingwen</Authors>
+    <Description>npoi extensions</Description>
+    <PackageProjectUrl>https://669.icu</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/liqingwen2015/NiuX.Npoi</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
