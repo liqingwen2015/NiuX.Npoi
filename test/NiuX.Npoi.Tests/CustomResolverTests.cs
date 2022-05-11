@@ -213,7 +213,7 @@ public class CustomResolverTests : NpoiTestBase
         sheet.CreateRow(0);
         sheet.CreateRow(1);
         var columnName = nameof(SampleClass.DateProperty);
-        const string format = "m/d/yyyy h:mm";
+        const string? format = "m/d/yyyy h:mm";
 
         // Header row
         sheet.GetRow(0).CreateCell(0).SetCellValue(columnName);

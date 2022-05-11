@@ -11,11 +11,15 @@ using NiuX.Npoi.Extensions;
 
 namespace NiuX.Npoi.Utils;
 
+/// <summary>
+/// Npoi Utility
+/// </summary>
 public static class NpoiUtility
 {
     /// <summary>
-    /// 读取 Excel 并转换为 DataTable
+    /// Reads as data table.
     /// </summary>
+    /// <param name="filePath">The file path.</param>
     /// <returns></returns>
     public static DataTable ReadAsDataTable(string filePath)
     {
@@ -65,10 +69,11 @@ public static class NpoiUtility
     }
 
 #if NETSTANDARD2_1_OR_GREATER
-    
+
     /// <summary>
-    /// 读取 Excel 并转换为 DataTable
+    /// Reads as data table asynchronous.
     /// </summary>
+    /// <param name="filePath">The file path.</param>
     /// <returns></returns>
     public static async Task<DataTable> ReadAsDataTableAsync(string filePath)
     {
@@ -123,19 +128,28 @@ public static class NpoiUtility
 #endif
 
 
-
-
+    /// <summary>
+    /// Reads as json.
+    /// </summary>
+    /// <param name="filePath">The file path.</param>
+    /// <returns></returns>
     public static string ReadAsJson(string filePath) => ReadAsDataTable(filePath).ToJson();
 
-    public static List<T> ReadAsList<T>(string filePath) => ReadAsDataTable(filePath).ToJson().FromJson<List<T>>();
-
     /// <summary>
-    /// 写入 Excel
+    /// Reads as list.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="filePath"></param>
-    /// <param name="items"></param>
-    /// <param name="sheetName"></param>
+    /// <param name="filePath">The file path.</param>
+    /// <returns></returns>
+    public static List<T>? ReadAsList<T>(string filePath) => ReadAsDataTable(filePath).ToJson().FromJson<List<T>>();
+
+    /// <summary>
+    /// Writes the specified file path.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="filePath">The file path.</param>
+    /// <param name="items">The items.</param>
+    /// <param name="sheetName">Name of the sheet.</param>
     public static void Write<T>(string filePath, IEnumerable<T> items, string sheetName = "sheet1")
     {
         // Lets converts our object data to Datatable for a simplified logic.
@@ -178,12 +192,12 @@ public static class NpoiUtility
     }
 
     /// <summary>
-    /// 写入 Excel
+    /// Writes the specified file path.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="filePath"></param>
-    /// <param name="items"></param>
-    /// <param name="sheetName"></param>
+    /// <param name="filePath">The file path.</param>
+    /// <param name="items">The items.</param>
+    /// <param name="sheetName">Name of the sheet.</param>
     public static void Write<T>(string filePath, List<T> items, string sheetName = "sheet1")
     {
 
@@ -229,12 +243,12 @@ public static class NpoiUtility
 #if NETSTANDARD2_1_OR_GREATER
 
     /// <summary>
-    /// 写入 Excel
+    /// Writes the asynchronous.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="filePath"></param>
-    /// <param name="items"></param>
-    /// <param name="sheetName"></param>
+    /// <param name="filePath">The file path.</param>
+    /// <param name="items">The items.</param>
+    /// <param name="sheetName">Name of the sheet.</param>
     public static async Task WriteAsync<T>(string filePath, List<T> items, string sheetName = "sheet1")
     {
 
@@ -278,12 +292,13 @@ public static class NpoiUtility
     }
 
     /// <summary>
-    /// 写入 Excel
+    /// Writes the asynchronous.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="filePath"></param>
-    /// <param name="items"></param>
-    /// <param name="sheetName"></param>
+    /// <param name="filePath">The file path.</param>
+    /// <param name="items">The items.</param>
+    /// <param name="sheetName">Name of the sheet.</param>
+    /// <returns></returns>
     public static async Task WriteAsync<T>(string filePath, IEnumerable<T> items, string sheetName = "sheet1")
     {
 
@@ -327,6 +342,5 @@ public static class NpoiUtility
     }
 
 #endif
-
 
 }

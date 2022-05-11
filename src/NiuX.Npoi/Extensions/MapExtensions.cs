@@ -21,23 +21,21 @@ namespace NiuX.Npoi.Extensions
         /// <param name="tryTake">The function try to import from cell value to the target object.</param>
         /// <param name="tryPut">The function try to export source object to the cell.</param>
         /// <returns>The mapper object.</returns>
-        public static Mapper Map(this Mapper mapper, string columnName, PropertyInfo propertyInfo,
-            Func<IColumnInfo, object, bool> tryTake = null,
-            Func<IColumnInfo, object, bool> tryPut = null)
+        public static Mapper Map(this Mapper mapper, string columnName, PropertyInfo? propertyInfo,
+            Func<IColumnInfo, object, bool>? tryTake = null,
+            Func<IColumnInfo, object, bool>? tryPut = null)
         {
-            if (columnName == null) throw new ArgumentNullException(nameof(columnName));
-            if (propertyInfo == null) throw new ArgumentNullException(nameof(propertyInfo));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(columnName, nameof(columnName));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(propertyInfo, nameof(propertyInfo));
 
-            var columnAttribute = new ColumnAttribute
+            return mapper.Map(new ColumnAttribute
             {
                 Property = propertyInfo,
                 Name = columnName,
                 TryPut = tryPut,
                 TryTake = tryTake,
                 Ignored = false
-            };
-
-            return mapper.Map(columnAttribute);
+            });
         }
 
         /// <summary>
@@ -49,22 +47,20 @@ namespace NiuX.Npoi.Extensions
         /// <param name="tryTake">The function try to import from cell value to the target object.</param>
         /// <param name="tryPut">The function try to export source object to the cell.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper Map(this Npoi.Mapper mapper, ushort columnIndex, PropertyInfo propertyInfo,
-            Func<IColumnInfo, object, bool> tryTake = null,
-            Func<IColumnInfo, object, bool> tryPut = null)
+        public static Mapper Map(this Mapper mapper, ushort columnIndex, PropertyInfo? propertyInfo,
+            Func<IColumnInfo, object, bool>? tryTake = null,
+            Func<IColumnInfo, object, bool>? tryPut = null)
         {
-            if (propertyInfo == null) throw new ArgumentNullException(nameof(propertyInfo));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(propertyInfo, nameof(propertyInfo));
 
-            var columnAttribute = new ColumnAttribute
+            return mapper.Map(new ColumnAttribute
             {
                 Property = propertyInfo,
                 Index = columnIndex,
                 TryPut = tryPut,
                 TryTake = tryTake,
                 Ignored = false
-            };
-
-            return mapper.Map(columnAttribute);
+            });
         }
 
         /// <summary>
@@ -77,20 +73,20 @@ namespace NiuX.Npoi.Extensions
         /// <param name="tryTake">The function try to import from cell value to the target object.</param>
         /// <param name="tryPut">The function try to export source object to the cell.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper Map<T>(this Npoi.Mapper mapper, string columnName, string propertyName,
-            Func<IColumnInfo, object, bool> tryTake = null,
-            Func<IColumnInfo, object, bool> tryPut = null)
+        public static Mapper Map<T>(this Mapper mapper, string columnName, string propertyName,
+            Func<IColumnInfo, object, bool>? tryTake = null,
+            Func<IColumnInfo, object, bool>? tryPut = null)
         {
-            if (mapper == null) throw new ArgumentNullException(nameof(mapper));
-            if (columnName == null) throw new ArgumentNullException(nameof(columnName));
-            if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(mapper, nameof(mapper));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(columnName, nameof(columnName));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(propertyName, nameof(propertyName));
 
             var type = typeof(T);
             var pi = type.GetProperty(propertyName, MapHelper.BindingFlag);
 
             if (pi == null && type != typeof(object)) throw new InvalidOperationException($"Cannot find a public property in name of '{propertyName}'.");
 
-            var columnAttribute = new ColumnAttribute
+            return mapper.Map(new ColumnAttribute
             {
                 Property = pi,
                 PropertyName = propertyName,
@@ -98,9 +94,7 @@ namespace NiuX.Npoi.Extensions
                 TryPut = tryPut,
                 TryTake = tryTake,
                 Ignored = false
-            };
-
-            return mapper.Map(columnAttribute);
+            });
         }
 
         /// <summary>
@@ -113,16 +107,16 @@ namespace NiuX.Npoi.Extensions
         /// <param name="tryTake">The function try to import from cell value to the target object.</param>
         /// <param name="tryPut">The function try to export source object to the cell.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper Map<T>(this Npoi.Mapper mapper, string columnName, Expression<Func<T, object>> propertySelector,
-            Func<IColumnInfo, object, bool> tryTake = null,
-            Func<IColumnInfo, object, bool> tryPut = null)
+        public static Mapper Map<T>(this Mapper mapper, string columnName, Expression<Func<T, object>> propertySelector,
+            Func<IColumnInfo, object, bool>? tryTake = null,
+            Func<IColumnInfo, object, bool>? tryPut = null)
         {
-            if (mapper == null) throw new ArgumentNullException(nameof(mapper));
-            if (columnName == null) throw new ArgumentNullException(nameof(columnName));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(mapper, nameof(mapper));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(columnName, nameof(columnName));
 
             var pi = MapHelper.GetPropertyInfoByExpression(propertySelector);
 
-            if (pi == null) throw new InvalidOperationException($"Cannot find the property specified by the selector.");
+            ExceptionUtils.ThrowInvalidOperationExceptionIfNull(pi, "Cannot find the property specified by the selector.");
 
             return mapper.Map(columnName, pi, tryTake, tryPut);
         }
@@ -137,19 +131,19 @@ namespace NiuX.Npoi.Extensions
         /// <param name="tryTake">The function try to import from cell value to the target object.</param>
         /// <param name="tryPut">The function try to export source object to the cell.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper Map<T>(this Npoi.Mapper mapper, ushort columnIndex, string propertyName,
-            Func<IColumnInfo, object, bool> tryTake = null,
-            Func<IColumnInfo, object, bool> tryPut = null)
+        public static Mapper Map<T>(this Mapper mapper, ushort columnIndex, string propertyName,
+            Func<IColumnInfo, object, bool>? tryTake = null,
+            Func<IColumnInfo, object, bool>? tryPut = null)
         {
-            if (mapper == null) throw new ArgumentNullException(nameof(mapper));
-            if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(mapper, nameof(mapper));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(propertyName, nameof(propertyName));
 
             var type = typeof(T);
             var pi = type.GetProperty(propertyName, MapHelper.BindingFlag);
 
-            if (pi == null && type != typeof(object)) throw new InvalidOperationException($"Cannot find a public property in name of '{propertyName}'.");
+            ExceptionUtils.ThrowInvalidOperationException(() => pi == null && type != typeof(object), $"Cannot find a public property in name of '{propertyName}'.");
 
-            var columnAttribute = new ColumnAttribute
+            return mapper.Map(new ColumnAttribute
             {
                 Property = pi,
                 PropertyName = propertyName,
@@ -157,9 +151,7 @@ namespace NiuX.Npoi.Extensions
                 TryPut = tryPut,
                 TryTake = tryTake,
                 Ignored = false
-            };
-
-            return mapper.Map(columnAttribute);
+            });
         }
 
         /// <summary>
@@ -172,13 +164,13 @@ namespace NiuX.Npoi.Extensions
         /// <param name="tryTake">The function try to import from cell value to the target object.</param>
         /// <param name="tryPut">The function try to export source object to the cell.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper Map<T>(this Npoi.Mapper mapper, ushort columnIndex, Expression<Func<T, object>> propertySelector,
-            Func<IColumnInfo, object, bool> tryTake = null,
-            Func<IColumnInfo, object, bool> tryPut = null)
+        public static Mapper Map<T>(this Mapper mapper, ushort columnIndex, Expression<Func<T, object>> propertySelector,
+            Func<IColumnInfo, object, bool>? tryTake = null,
+            Func<IColumnInfo, object, bool>? tryPut = null)
         {
-            if (mapper == null) throw new ArgumentNullException(nameof(mapper));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(mapper, nameof(mapper));
             var pi = MapHelper.GetPropertyInfoByExpression(propertySelector);
-            if (pi == null) throw new InvalidOperationException($"Cannot find the property specified by the selector.");
+            ExceptionUtils.ThrowInvalidOperationExceptionIfNull(pi, "Cannot find the property specified by the selector.");
 
             return mapper.Map(columnIndex, pi, tryTake, tryPut);
         }
@@ -194,15 +186,17 @@ namespace NiuX.Npoi.Extensions
         /// <param name="tryTake">The function try to import from cell value to the target object.</param>
         /// <param name="tryPut">The function try to export source object to the cell.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper Map<T>(this Npoi.Mapper mapper, ushort columnIndex, Expression<Func<T, object>> propertySelector, string exportedColumnName,
-            Func<IColumnInfo, object, bool> tryTake = null,
-            Func<IColumnInfo, object, bool> tryPut = null)
+        public static Mapper Map<T>(this Mapper mapper, ushort columnIndex, Expression<Func<T, object>> propertySelector, string exportedColumnName,
+            Func<IColumnInfo, object, bool>? tryTake = null,
+            Func<IColumnInfo, object, bool>? tryPut = null)
         {
-            if (mapper == null) throw new ArgumentNullException(nameof(mapper));
-            var pi = MapHelper.GetPropertyInfoByExpression(propertySelector);
-            if (pi == null) throw new InvalidOperationException($"Cannot find the property specified by the selector.");
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(mapper, nameof(mapper));
 
-            var columnAttribute = new ColumnAttribute
+            var pi = MapHelper.GetPropertyInfoByExpression(propertySelector);
+
+            ExceptionUtils.ThrowInvalidOperationExceptionIfNull(pi, "Cannot find the property specified by the selector.");
+
+            return mapper.Map(new ColumnAttribute
             {
                 Property = pi,
                 Index = columnIndex,
@@ -210,9 +204,7 @@ namespace NiuX.Npoi.Extensions
                 TryPut = tryPut,
                 TryTake = tryTake,
                 Ignored = false
-            };
-
-            return mapper.Map(columnAttribute);
+            });
         }
 
         /// <summary>
@@ -226,19 +218,19 @@ namespace NiuX.Npoi.Extensions
         /// <param name="tryTake">The function try to import from cell value to the target object.</param>
         /// <param name="tryPut">The function try to export source object to the cell.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper Map<T>(this Npoi.Mapper mapper, ushort columnIndex, string propertyName, string exportedColumnName,
-            Func<IColumnInfo, object, bool> tryTake = null,
-            Func<IColumnInfo, object, bool> tryPut = null)
+        public static Mapper Map<T>(this Mapper mapper, ushort columnIndex, string propertyName, string exportedColumnName,
+            Func<IColumnInfo, object, bool>? tryTake = null,
+            Func<IColumnInfo, object, bool>? tryPut = null)
         {
-            if (mapper == null) throw new ArgumentNullException(nameof(mapper));
-            if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(mapper, nameof(mapper));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(propertyName, nameof(propertyName));
 
             var type = typeof(T);
             var pi = type.GetProperty(propertyName, MapHelper.BindingFlag);
 
-            if (pi == null && type != typeof(object)) throw new InvalidOperationException($"Cannot find a public property in name of '{propertyName}'.");
+            ExceptionUtils.ThrowInvalidOperationException(() => pi == null && type != typeof(object), $"Cannot find a public property in name of '{propertyName}'.");
 
-            var columnAttribute = new ColumnAttribute
+            return mapper.Map(new ColumnAttribute
             {
                 Property = pi,
                 PropertyName = propertyName,
@@ -247,9 +239,7 @@ namespace NiuX.Npoi.Extensions
                 TryPut = tryPut,
                 TryTake = tryTake,
                 Ignored = false
-            };
-
-            return mapper.Map(columnAttribute);
+            });
         }
 
         /// <summary>
@@ -258,23 +248,21 @@ namespace NiuX.Npoi.Extensions
         /// <param name="mapper">The <see cref="Mapper"/> object.</param>
         /// <param name="propertyName">The property name.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper IgnoreErrorsFor<T>(this Npoi.Mapper mapper, string propertyName)
+        public static Mapper IgnoreErrorsFor<T>(this Mapper mapper, string propertyName)
         {
-            if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
+            ExceptionUtils.ThrowArgumentNullExceptionIfNull(propertyName, nameof(propertyName));
 
             var type = typeof(T);
             var pi = type.GetProperty(propertyName, MapHelper.BindingFlag);
 
-            if (pi == null && type != typeof(object)) throw new InvalidOperationException($"Cannot find a public property in name of '{propertyName}'.");
+            ExceptionUtils.ThrowInvalidOperationException(() => pi == null && type != typeof(object), $"Cannot find a public property in name of '{propertyName}'.");
 
-            var columnAttribute = new ColumnAttribute
+            return mapper.Map(new ColumnAttribute
             {
                 Property = pi,
                 PropertyName = propertyName,
                 IgnoreErrors = true
-            };
-
-            return mapper.Map(columnAttribute);
+            });
         }
 
         /// <summary>
@@ -283,18 +271,17 @@ namespace NiuX.Npoi.Extensions
         /// <param name="mapper">The <see cref="Mapper"/> object.</param>
         /// <param name="propertySelector">Property selector.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper IgnoreErrorsFor<T>(this Npoi.Mapper mapper, Expression<Func<T, object>> propertySelector)
+        public static Mapper IgnoreErrorsFor<T>(this Mapper mapper, Expression<Func<T, object>> propertySelector)
         {
             var pi = MapHelper.GetPropertyInfoByExpression(propertySelector);
-            if (pi == null) throw new InvalidOperationException($"Cannot find the property specified by the selector.");
 
-            var columnAttribute = new ColumnAttribute
+            ExceptionUtils.ThrowInvalidOperationExceptionIfNull(pi, "Cannot find the property specified by the selector.");
+
+            return mapper.Map(new ColumnAttribute
             {
                 Property = pi,
                 IgnoreErrors = true
-            };
-
-            return mapper.Map(columnAttribute);
+            });
         }
 
         /// <summary>
@@ -304,7 +291,7 @@ namespace NiuX.Npoi.Extensions
         /// <param name="mapper">The <see cref="Mapper"/> object.</param>
         /// <param name="propertyNames">Property names.</param>
         /// <returns>The mapper object.</returns>
-        public static Npoi.Mapper Ignore<T>(this Npoi.Mapper mapper, params string[] propertyNames)
+        public static Mapper Ignore<T>(this Mapper mapper, params string[] propertyNames)
         {
             var type = typeof(T);
 
@@ -312,18 +299,15 @@ namespace NiuX.Npoi.Extensions
             {
                 var pi = type.GetProperty(propertyName, MapHelper.BindingFlag);
 
-                if (pi == null && type != typeof(object)) // Does not throw for dynamic type.
-                {
-                    throw new InvalidOperationException($"Cannot find a public property in name of '{propertyName}'.");
-                }
+                // Does not throw for dynamic type.
+                ExceptionUtils.ThrowInvalidOperationException(() => pi == null && type != typeof(object), $"Cannot find a public property in name of '{propertyName}'.");
 
-                var columnAttribute = new ColumnAttribute
+                mapper.Map(new ColumnAttribute
                 {
                     Property = pi,
                     PropertyName = propertyName,
                     Ignored = true
-                };
-                mapper.Map(columnAttribute);
+                });
             }
 
             return mapper;

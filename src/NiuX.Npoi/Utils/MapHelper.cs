@@ -27,7 +27,7 @@ public class MapHelper
     /// <summary>
     /// Stores cached custom styles to avoid create new ICellStyle for each customized cell.
     /// </summary>
-    private readonly Dictionary<string, ICellStyle> _customStyles = new Dictionary<string, ICellStyle>();
+    private readonly Dictionary<string?, ICellStyle> _customStyles = new Dictionary<string?, ICellStyle>();
 
     // Column chars that will be used for Excel columns.
     // e.g. Column A is the first column, Column AA is the 27th column.
@@ -137,7 +137,7 @@ public class MapHelper
     /// <param name="firstDataRowIndex">The index for the first row to detect.</param>
     /// <param name="columns">The column collection to load formats into.</param>
     /// <param name="defaultFormats">The default formats specified for certain types.</param>
-    public void LoadDataFormats(ISheet sheet, int firstDataRowIndex, IEnumerable<IColumnInfo> columns, Dictionary<Type, string> defaultFormats)
+    public void LoadDataFormats(ISheet sheet, int firstDataRowIndex, IEnumerable<IColumnInfo> columns, Dictionary<Type, string?> defaultFormats)
     {
         if (sheet == null) return;
         if (columns == null) return;
@@ -181,7 +181,7 @@ public class MapHelper
     /// <param name="customFormat">The custom format string.</param>
     /// <param name="columnFormat">The default column format number.</param>
     /// <returns><c>ICellStyle</c> object for the given cell; null if not format specified.</returns>
-    public ICellStyle GetCellStyle(ICell cell, string customFormat, short? columnFormat)
+    public ICellStyle GetCellStyle(ICell cell, string? customFormat, short? columnFormat)
     {
         ICellStyle style = null;
         var workbook = cell?.Row.Sheet.Workbook;
@@ -227,7 +227,7 @@ public class MapHelper
     /// <param name="workbook">The <see cref="IWorkbook"/> object.</param>
     /// <param name="format">The custom format.</param>
     /// <returns>The <see cref="ICellStyle"/> object.</returns>
-    public static ICellStyle CreateCellStyle(IWorkbook workbook, string format)
+    public static ICellStyle CreateCellStyle(IWorkbook workbook, string? format)
     {
         if (workbook == null) throw new ArgumentNullException(nameof(workbook));
         if (string.IsNullOrWhiteSpace(format)) throw new ArgumentException($"Parameter '{nameof(format)}' cannot be null or white string.");
@@ -262,7 +262,7 @@ public class MapHelper
     /// <param name="value">The value object.</param>
     /// <param name="defaultFormats">Default format dictionary.</param>
     /// <returns>The <see cref="ICellStyle"/> object.</returns>
-    public ICellStyle GetDefaultStyle(IWorkbook workbook, object value, Dictionary<Type, string> defaultFormats)
+    public ICellStyle GetDefaultStyle(IWorkbook workbook, object value, Dictionary<Type, string?> defaultFormats)
     {
         if (value == null || workbook == null || defaultFormats == null) return null;
 
@@ -492,7 +492,7 @@ public class MapHelper
 
     #endregion
 
-    internal static void EnsureDefaultFormats(IEnumerable<IColumnInfo> columns, Dictionary<Type, string> defaultFormats)
+    internal static void EnsureDefaultFormats(IEnumerable<IColumnInfo> columns, Dictionary<Type, string?> defaultFormats)
     {
         //
         // For now, only take care DateTime.

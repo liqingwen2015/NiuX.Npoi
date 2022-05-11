@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Security.Cryptography;
 using System.Text;
+using NiuX.Npoi.Utils;
 
 namespace NiuX.Npoi;
 
@@ -100,7 +101,7 @@ public static class AnonymousTypeFactory
     /// <param name="isMutable">true if the anonymous type's properties should have setters</param>
     /// <param name="parent">the parent of the anonymous type, or null to not specify a base type</param>
     /// <returns>the anonymous type</returns>
-    public static Type CreateType(IEnumerable<KeyValuePair<string, Type>> typePairs, bool isMutable, Type parent)
+    public static Type CreateType(IEnumerable<KeyValuePair<string, Type>> typePairs, bool isMutable, Type? parent)
     {
         if (typePairs == null) throw new ArgumentNullException(nameof(typePairs));
 
@@ -117,7 +118,7 @@ public static class AnonymousTypeFactory
     /// </summary>
     /// <param name="propertyNames">the property names</param>
     /// <returns>the anonymous generic type definition</returns>
-    public static Type CreateGenericTypeDefinition(IEnumerable<string> propertyNames)
+    public static Type? CreateGenericTypeDefinition(IEnumerable<string> propertyNames)
     {
         return CreateGenericTypeDefinition(propertyNames, isMutable: false, parent: null);
     }
@@ -128,7 +129,7 @@ public static class AnonymousTypeFactory
     /// <param name="propertyNames">the property names</param>
     /// <param name="isMutable">true if the properties should have setters</param>
     /// <returns>the anonymous generic type definition</returns>
-    public static Type CreateGenericTypeDefinition(IEnumerable<string> propertyNames, bool isMutable)
+    public static Type? CreateGenericTypeDefinition(IEnumerable<string> propertyNames, bool isMutable)
     {
         return CreateGenericTypeDefinition(propertyNames, isMutable: isMutable, parent: null);
     }
@@ -140,23 +141,21 @@ public static class AnonymousTypeFactory
     /// <param name="isMutable">true if the properties should have setters</param>
     /// <param name="parent">the parent class of the anonymous type, or null if it has no parent class</param>
     /// <returns>the anonymous generic type definition</returns>
-    public static Type CreateGenericTypeDefinition(IEnumerable<string> propertyNames, bool isMutable, Type parent)
+    public static Type? CreateGenericTypeDefinition(IEnumerable<string> propertyNames, bool isMutable, Type? parent)
     {
         if (propertyNames == null) throw new ArgumentNullException(nameof(propertyNames));
         return GetOrCreateGenericTypeDefinition(propertyNames.ToList(), isMutable: isMutable, parent: parent);
     }
 
-    private static Type GetOrCreateGenericTypeDefinition(ICollection<string> propertyNames, bool isMutable, Type parent)
+    private static Type? GetOrCreateGenericTypeDefinition(ICollection<string> propertyNames, bool isMutable, Type? parent)
     {
-        if (!propertyNames.Any())
+        if (propertyNames.Count == 0)
         {
             throw new ArgumentOutOfRangeException(nameof(propertyNames), propertyNames.Count, "At least one property name is required to create an anonymous type");
         }
-        if (parent != null && !parent.GetConstructors().Any(c => !c.GetParameters().Any()))
-        {
-            throw new ArgumentException(
-                $"Parent type \"{parent.FullName}\" is not supported because it does not have a default constructor");
-        }
+
+        ExceptionUtils.ThrowArgumentException(() => parent?.GetConstructors().All(c => c.GetParameters().Length > 0) == true,
+            $"Parent type \"{parent!.FullName}\" is not supported because it does not have a default constructor");
 
         var genericTypeDefinitionName = GenerateGenericTypeDefinitionName(
             propertyNames,
@@ -166,24 +165,30 @@ public static class AnonymousTypeFactory
 
         // We need to check for the type and define/create it as one atomic operation, 
         // otherwise we could get a TypeBuilder back instead of a full Type.
-        Type genericTypeDefinition;
+        Type? genericTypeDefinition;
+        
         lock (SyncRoot)
         {
-            genericTypeDefinition = ModuleBuilder.GetType(genericTypeDefinitionName);
-            if (genericTypeDefinition == null)
-            {
-                genericTypeDefinition = CreateGenericTypeDefinitionNoLock(
-                    genericTypeDefinitionName,
-                    propertyNames,
-                    isMutable: isMutable,
-                    parent: parent
-                );
-            }
+            genericTypeDefinition = ModuleBuilder.GetType(genericTypeDefinitionName) ??
+                                    CreateGenericTypeDefinitionNoLock(
+                                        genericTypeDefinitionName,
+                                        propertyNames,
+                                        isMutable: isMutable,
+                                        parent: parent
+            );
         }
+        
         return genericTypeDefinition;
     }
 
-    private static string GenerateGenericTypeDefinitionName(ICollection<string> propertyNames, bool isMutable, Type parent)
+    /// <summary>
+    /// Generates the name of the generic type definition.
+    /// </summary>
+    /// <param name="propertyNames">The property names.</param>
+    /// <param name="isMutable">if set to <c>true</c> [is mutable].</param>
+    /// <param name="parent">The parent.</param>
+    /// <returns></returns>
+    private static string GenerateGenericTypeDefinitionName(ICollection<string> propertyNames, bool isMutable, Type? parent)
     {
         // A real anonymous type is named something like "<>f__AnonymousType0`2" (for the first anonymous type generated with two properties).
 
@@ -204,16 +209,19 @@ public static class AnonymousTypeFactory
         keyJsonBuilder.Append("properties=[");
         keyJsonBuilder.Append(string.Join(",", propertyNames.Select(n => '"' + n.Replace("\"", "\"\"") + '"')));
         keyJsonBuilder.Append(']');
+        
         if (isMutable)
         {
             keyJsonBuilder.Append(",isMutable=true");
         }
+        
         if (parent != null)
         {
             keyJsonBuilder.Append(",parent=\"");
             keyJsonBuilder.Append(parent.FullName);
             keyJsonBuilder.Append("\"");
         }
+        
         // If we add support for interfaces, then we'll need them included in the key string too...
         //if (interfaces != null && interfaces.Any())
         //{
@@ -230,11 +238,18 @@ public static class AnonymousTypeFactory
             keyHashHexString = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
         }
 
-        string genericTypeDefinitionName = $"<>f__MyAnonymousType{keyHashHexString}`{propertyNames.Count}";
-        return genericTypeDefinitionName;
+        return $"<>f__MyAnonymousType{keyHashHexString}`{propertyNames.Count}";
     }
 
-    private static Type CreateGenericTypeDefinitionNoLock(string genericTypeDefinitionName, ICollection<string> propertyNames, bool isMutable, Type parent)
+    /// <summary>
+    /// Creates the generic type definition no lock.
+    /// </summary>
+    /// <param name="genericTypeDefinitionName">Name of the generic type definition.</param>
+    /// <param name="propertyNames">The property names.</param>
+    /// <param name="isMutable">if set to <c>true</c> [is mutable].</param>
+    /// <param name="parent">The parent.</param>
+    /// <returns></returns>
+    private static Type? CreateGenericTypeDefinitionNoLock(string genericTypeDefinitionName, ICollection<string> propertyNames, bool isMutable, Type? parent)
     {
         var typeBuilder = ModuleBuilder.DefineType(genericTypeDefinitionName,
             attr: TypeAttributes.Public | TypeAttributes.AutoLayout
@@ -259,7 +274,7 @@ public static class AnonymousTypeFactory
             var fieldAttributes = FieldAttributes.Private;
             if (!isMutable)
             {
-                fieldAttributes = fieldAttributes | FieldAttributes.InitOnly;
+                fieldAttributes |= FieldAttributes.InitOnly;
             }
             var fieldBuilder = typeBuilder.DefineField($"<{propertyName}>i__Field", typeParameter, fieldAttributes);
             fieldBuilders.Add(fieldBuilder);

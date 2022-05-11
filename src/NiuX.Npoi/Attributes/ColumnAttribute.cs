@@ -81,7 +81,7 @@ public sealed class ColumnAttribute : Attribute
     /// <summary>
     /// Gets or sets the custom format, see https://support.office.com/en-us/article/Create-or-delete-a-custom-number-format-78f2a361-936b-4c03-8772-09fab54be7f4 for the syntax.
     /// </summary>
-    public string CustomFormat { get; set; }
+    public string? CustomFormat { get; set; }
 
     /// <summary>
     /// Indicates whether or not to ignore all errors for the column.
@@ -91,12 +91,12 @@ public sealed class ColumnAttribute : Attribute
     /// <summary>
     /// Try take cell value for the given column when import data from file.
     /// </summary>
-    internal Func<IColumnInfo, object, bool> TryTake { get; set; }
+    internal Func<IColumnInfo, object, bool>? TryTake { get; set; }
 
     /// <summary>
     /// Try set value to cell for the given column when export object to file.
     /// </summary>
-    internal Func<IColumnInfo, object, bool> TryPut { get; set; }
+    internal Func<IColumnInfo, object, bool>? TryPut { get; set; }
 
     #endregion
 
@@ -194,7 +194,7 @@ public sealed class ColumnAttribute : Attribute
     /// </param>
     public void MergeTo(Dictionary<PropertyInfo, ColumnAttribute> attributes, bool overwrite = true)
     {
-        if (attributes == null) return;
+        //if (attributes == null) return;
         var pi = Property;
         if (pi == null) return;
 

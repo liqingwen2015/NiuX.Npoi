@@ -5,6 +5,12 @@
 /// </summary>
 public interface IRowInfo
 {
+    /// <summary>
+    /// Gets or sets the row number.
+    /// </summary>
+    /// <value>
+    /// The row number.
+    /// </value>
     int RowNumber { get; set; }
 
     /// <summary>

@@ -42,7 +42,7 @@ public class Mapper
     /// <summary>
     /// Stores formats for type rather than specific property.
     /// </summary>
-    internal readonly Dictionary<Type, string> TypeFormats = new();
+    internal readonly Dictionary<Type, string?> TypeFormats = new();
 
     /// <summary>
     /// PropertyInfo map to ColumnAttribute
@@ -859,7 +859,7 @@ public class Mapper
         var sheetName = sheet.SheetName;
         var firstRowIndex = GetFirstRowIndex(sheet);
         var firstRow = sheet.GetRow(firstRowIndex);
-        var objectArray = objects as T[] ?? objects.ToArray();
+        T[] objectArray = objects as T[] ?? objects.ToArray();
         var type = MapHelper.GetConcreteType(objectArray);
 
         var columns = GetTrackedColumns(sheetName, type) ??

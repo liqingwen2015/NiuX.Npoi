@@ -141,7 +141,7 @@ public class ColumnInfo : IColumnInfo
     /// <param name="isHeader">If <c>true</c>, use HeaderFormat; otherwise use DataFormat.</param>
     /// <param name="defaultFormats">The default formats dictionary.</param>
     /// <param name="helper">The helper object.</param>
-    public void SetCellStyle(ICell cell, object value, bool isHeader, Dictionary<Type, string> defaultFormats, MapHelper helper)
+    public void SetCellStyle(ICell cell, object value, bool isHeader, Dictionary<Type, string?> defaultFormats, MapHelper helper)
     {
         if (cell == null) throw new ArgumentNullException(nameof(cell));
 
