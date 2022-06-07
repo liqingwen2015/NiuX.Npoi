@@ -142,10 +142,7 @@ public class Mapper
     /// Initialize a new instance of <see cref="Mapper"/> class with a workbook.
     /// </summary>
     /// <param name="workbook">The input IWorkbook object.</param>
-    public Mapper(IWorkbook workbook)
-    {
-        Workbook = workbook ?? throw new ArgumentNullException(nameof(workbook));
-    }
+    public Mapper(IWorkbook workbook) => Workbook = workbook ?? throw new ArgumentNullException(nameof(workbook));
 
     /// <summary>
     /// Initialize a new instance of <see cref="Mapper"/> class with file path to read workbook.
